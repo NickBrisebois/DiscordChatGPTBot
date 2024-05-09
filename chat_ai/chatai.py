@@ -3,10 +3,19 @@ from openai import AsyncOpenAI
 
 class ChatAI:
     def __init__(self):
+        self._system_prompt = {
+            "role": "system",
+            "content": "You are a chat bot named Lez",
+        }
         self._client = AsyncOpenAI()
-        self._conversation_history = [
-            {"role": "system", "content": "You are a chat bot named Lez"}
-        ]
+        self.clear_history()
+
+    def set_system_prompt(self, text: str):
+        self._system_prompt = {"role": "system", "content": text}
+        self.clear_history()
+
+    def clear_history(self):
+        self._conversation_history = [self._system_prompt]
 
     async def get_response(self, user_id: int, input_text: str) -> str:
         self._conversation_history.append({"role": "user", "content": input_text})
@@ -20,7 +29,7 @@ class ChatAI:
 
         if len(self._conversation_history) > 100:
             self._conversation_history.pop(0)
-            self._conversation_history.pop(0)
+            self._conversation_history[0] = self._system_prompt
 
         return response_text
 

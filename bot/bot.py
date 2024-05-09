@@ -1,18 +1,30 @@
 import random
 import discord
 from discord import Intents
+from discord import app_commands
+from discord.ext import commands
 
 from chat_ai.chatai import ChatAI
 
 
-class ChatBot(discord.Client):
-    def __init__(self, chat_ai: ChatAI, intents=Intents) -> None:
+class ChatBot(commands.Bot):
+    def __init__(self, chat_ai: ChatAI, intents: Intents) -> None:
         self._chat_ai = chat_ai     
-        super().__init__(intents=intents)
+        super().__init__(intents=intents, command_prefix="!")
+
+    async def setup_hook(self):
+        self.tree.copy_global_to(guild=discord.Object(id=858851324043722752))
+        await self.tree.sync(guild=discord.Object(id=858851324043722752))
 
     async def on_ready(self) -> None:
         print("Logged on as", self.user)
-    
+
+    def clear_history(self) -> None:
+        self._chat_ai.clear_history()
+
+    def set_system_prompt(self, text: str) -> None:
+        self._chat_ai.set_system_prompt(text=text)
+
     async def on_message(self, message: discord.Message) -> None:
         if message.author == self.user:
             return
