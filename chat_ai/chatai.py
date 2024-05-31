@@ -1,5 +1,6 @@
 from openai import AsyncOpenAI
 
+CHAT_HISTORY_LENGTH = 50
 
 class ChatAI:
     def __init__(self):
@@ -22,12 +23,12 @@ class ChatAI:
         response = await self._client.chat.completions.create(
             model="ft:gpt-3.5-turbo-0125:personal:biglez60k2:9HHpOE6z",
             messages=self._conversation_history,
-            max_tokens=2000,
+            max_tokens=500,
         )
         response_text = response.choices[0].message.content
         self._conversation_history.append({"role": "assistant", "content": response_text})
 
-        if len(self._conversation_history) > 100:
+        if len(self._conversation_history) > CHAT_HISTORY_LENGTH:
             self._conversation_history.pop(0)
             self._conversation_history[0] = self._system_prompt
 
