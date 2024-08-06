@@ -36,7 +36,7 @@ class ChatBot(commands.Bot):
             if str(mention) == username:
                 has_mentioned = True
 
-        if has_mentioned or random.random() > float(0.96):
+        if has_mentioned or random.random() > float(0.98):
             async with message.channel.typing():
                 if "<@676962651103821826> " in message.content:
                     msg_text = message.content.split("<@676962651103821826> ")[1]
