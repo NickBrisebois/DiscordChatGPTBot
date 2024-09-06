@@ -2,6 +2,7 @@ from openai import AsyncOpenAI
 
 CHAT_HISTORY_LENGTH = 50
 
+
 class ChatAI:
     def __init__(self):
         self._system_prompt = {
@@ -21,12 +22,14 @@ class ChatAI:
     async def get_response(self, user_id: int, input_text: str) -> str:
         self._conversation_history.append({"role": "user", "content": input_text})
         response = await self._client.chat.completions.create(
-            model="ft:gpt-4o-2024-08-06:personal:biglez60k-4o:A4Hq6mVU",
+            model="ft:gpt-3.5-turbo-1106:personal:lezbetterinput1k:A4bfc0Kg",
             messages=self._conversation_history,
             max_tokens=500,
         )
         response_text = response.choices[0].message.content
-        self._conversation_history.append({"role": "assistant", "content": response_text})
+        self._conversation_history.append(
+            {"role": "assistant", "content": response_text}
+        )
 
         if len(self._conversation_history) > CHAT_HISTORY_LENGTH:
             self._conversation_history.pop(0)
@@ -41,9 +44,9 @@ class ChatAI:
                 {
                     "role": "system",
                     "content": (
-                        "I'm going to give you a random chat message and you will make a guess at what the context is"
-                        "Do not write anything other than the context"
-                        "Do not write things like 'this seems like', just give the context"
+                        """
+I'm going to give you a random instant messenger chat message and you will make a guess at what the previous message was. Do NOT write anything other than the previous message. Do not write things like 'this seems like', just give the previous message. I don't care if your guess is wrong, I only want the previous message.
+"""
                     ),
                 },
                 {"role": "user", "content": input_text},
