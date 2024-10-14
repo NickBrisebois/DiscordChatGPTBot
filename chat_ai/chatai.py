@@ -22,7 +22,7 @@ class ChatAI:
     async def get_response(self, user_id: int, input_text: str) -> str:
         self._conversation_history.append({"role": "user", "content": input_text})
         response = await self._client.chat.completions.create(
-            model="ft:gpt-3.5-turbo-0125:personal:lez60k-better:A4vAxeMd",
+            model="ft:gpt-4o-mini-2024-07-18:personal:biglez-nochatgptresponses:AI6fDiMi",
             messages=self._conversation_history,
             max_tokens=500,
         )
