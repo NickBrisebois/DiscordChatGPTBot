@@ -7,11 +7,13 @@ CHAT_HISTORY_LENGTH = 50
 class ChatAI:
     _conversation_history = {}
 
-    def __init__(self):
+    def __init__(self, bot_name: str, model_name: str):
+        self._bot_name = bot_name
         self._system_prompt = {
             "role": "system",
-            "content": "You are a chat bot named Lez",
+            "content": f"You are a chat bot named {self._bot_name}",
         }
+        self._model_name = model_name
         self._client = AsyncOpenAI()
         self.clear_history(clear_all=True)
 
@@ -37,7 +39,7 @@ class ChatAI:
         self._append_history(channel_id=channel_id, message={"role": "user", "content": input_text})
 
         response = await self._client.chat.completions.create(
-            model="ft:gpt-4o-mini-2024-07-18:personal:biglez-nochatgptresponses:AI6fDiMi",
+            model=self._model_name,
             messages=self._conversation_history[channel_id],
             max_tokens=500,
         )
@@ -51,20 +53,3 @@ class ChatAI:
             self._conversation_history[channel_id][0] = self._system_prompt
 
         return response_text
-
-    async def get_training_data_response(self, input_text: str) -> str:
-        response = await self._client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        """
-I'm going to give you a random instant messenger chat message and you will make a guess at what the previous message was. Do NOT write anything other than the previous message. Do not write things like 'this seems like', just give the previous message. I don't care if your guess is wrong, I only want the previous message.
-"""
-                    ),
-                },
-                {"role": "user", "content": input_text},
-            ],
-        )
-        return response.choices[0].message.content

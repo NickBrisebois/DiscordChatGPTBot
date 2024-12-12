@@ -1,3 +1,5 @@
+from os import environ
+
 import discord
 from chat_ai.chatai import ChatAI
 from bot.bot import ChatBot
@@ -6,23 +8,29 @@ from discord import Intents
 
 
 def main():
-    chat_ai = ChatAI()
+    # Configs
+    # note: OPENAI_API_KEY is used implicitly by the openai library
+    bot_name = environ.get("BOT_NAME")
+    discord_token = environ.get("DISCORD_BOT_TOKEN")
+    model_name = environ.get("OPENAI_MODEL")
+
+    chat_ai = ChatAI(bot_name=bot_name, model_name=model_name)
     discord_bot = ChatBot(chat_ai=chat_ai, intents=Intents.all())
 
-    @discord_bot.tree.command(name="clearhistory", description="Clear lez's history")
+    @discord_bot.tree.command(name="clearhistory", description=f"Clear {bot_name}'s history")
     async def clear_history(interaction: discord.Interaction):
         discord_bot.clear_history()
         await interaction.response.send_message("my memory is nice and empty :^)")
 
-    @discord_bot.tree.command(name="setprompt", description="Tell lez who he is")
+    @discord_bot.tree.command(name="setprompt", description=f"Tell {bot_name} who he is")
     @app_commands.describe(new_prompt="New system prompt")
     async def set_prompt(interaction: discord.Interaction, new_prompt: str):
         discord_bot.set_system_prompt(new_prompt)
         await interaction.response.send_message(
-            f"lez is now prompted with {new_prompt}"
+            f"{bot_name} is now prompted with {new_prompt}"
         )
 
-    discord_bot.run("Njc2OTYyNjUxMTAzODIxODI2.GI6boT.gmNkZ94PatwxL5HplUchyic5Xl_vnlaml5ZdCg")
+    discord_bot.run(discord_token)
 
 if __name__ == "__main__":
     main()
