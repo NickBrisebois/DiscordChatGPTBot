@@ -11,3 +11,7 @@ DISCORD_BOT_TOKEN: <token> # get this from here https://discord.com/developers/a
 OPENAI_MODEL: ft-gpt-4o-mini-2024-07-18:personal:xxxxxxxxxxxxx # fine tune here https://platform.openai.com/finetune
 BOT_NAME: lez # what's the name of this bot?
 ```
+
+Features:
+  - Channel specific memory (hardcoded to 50 messages but easily changeable)
+  - Can be DM'd for private conversation where you don't need to @ the bot
