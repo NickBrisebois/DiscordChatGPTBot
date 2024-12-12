@@ -1,6 +1,6 @@
 import random
 import discord
-from discord import Intents
+from discord import DMChannel, Intents
 from discord import app_commands
 from discord.ext import commands
 
@@ -25,6 +25,10 @@ class ChatBot(commands.Bot):
     def set_system_prompt(self, text: str) -> None:
         self._chat_ai.set_system_prompt(text=text)
 
+    @property
+    def _at_code(self) -> str:
+        return f"<@{self.user.id}>"
+
     async def on_message(self, message: discord.Message) -> None:
         if message.author == self.user:
             return
@@ -36,11 +40,13 @@ class ChatBot(commands.Bot):
             if str(mention) == username:
                 has_mentioned = True
 
-        if has_mentioned or random.random() > float(0.98):
+        if isinstance(message.channel, DMChannel) or has_mentioned or random.random() > float(0.98):
             async with message.channel.typing():
-                if "<@676962651103821826> " in message.content:
-                    msg_text = message.content.split("<@676962651103821826> ")[1]
+                if self._at_code in message.content:
+                    msg_text = message.content.split(self._at_code)[1]
                 else:
                     msg_text = message.content
-                ai_response = await self._chat_ai.get_response(message.author.id, msg_text) 
+
+                channel_id = str(message.channel.id)
+                ai_response = await self._chat_ai.get_response(channel_id=channel_id, input_text=msg_text) 
             await message.channel.send(ai_response)
