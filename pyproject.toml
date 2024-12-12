@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "biglez"
+name = "DiscordChatGPTBot"
 version = "0.1.0"
 description = ""
 authors = ["NickBrisebois <nickbrisebois12@gmail.com>"]
@@ -10,11 +10,6 @@ package-mode = false
 python = "^3.11"
 openai = "^1.17.1"
 discord = "^2.3.2"
-
-# [[tool.poetry.source]]
-# name = "pytorch_cpu"
-# url = "https://download.pytorch.org/whl/cpu"
-# priority = "explicit"
 
 [build-system]
 requires = ["poetry-core"]
