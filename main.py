@@ -13,9 +13,10 @@ def main():
     bot_name = environ.get("BOT_NAME")
     discord_token = environ.get("DISCORD_BOT_TOKEN")
     model_name = environ.get("OPENAI_MODEL")
+    discord_server_id = environ.get("DISCORD_SERVER_ID")
 
     chat_ai = ChatAI(bot_name=bot_name, model_name=model_name)
-    discord_bot = ChatBot(chat_ai=chat_ai, intents=Intents.all())
+    discord_bot = ChatBot(chat_ai=chat_ai, discord_server_id=discord_server_id, intents=Intents.all())
 
     @discord_bot.tree.command(name="clearhistory", description=f"Clear {bot_name}'s history")
     async def clear_history(interaction: discord.Interaction):

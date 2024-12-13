@@ -8,13 +8,14 @@ from chat_ai.chatai import ChatAI
 
 
 class ChatBot(commands.Bot):
-    def __init__(self, chat_ai: ChatAI, intents: Intents) -> None:
+    def __init__(self, chat_ai: ChatAI, discord_server_id: str, intents: Intents) -> None:
         self._chat_ai = chat_ai     
+        self._discord_server_id = discord_server_id
         super().__init__(intents=intents, command_prefix="!")
 
     async def setup_hook(self):
-        self.tree.copy_global_to(guild=discord.Object(id=858851324043722752))
-        await self.tree.sync(guild=discord.Object(id=858851324043722752))
+        self.tree.copy_global_to(guild=discord.Object(id=self._discord_server_id))
+        await self.tree.sync(guild=discord.Object(id=self._discord_server_id))
 
     async def on_ready(self) -> None:
         print("Logged on as", self.user)

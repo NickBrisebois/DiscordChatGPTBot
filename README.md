@@ -4,10 +4,16 @@ Rather lazily programmed discord bot that works with any OpenAI models.
 
 To install the libraries for it you'll need to install the Python package manager `poetry`
 
-To run you'll need these env vars:
+Once you have poetry, enter the cloned directory in your terminal and type
+```bash
+poetry install
 ```
-OPENAI_API_KEY: <api key> # get this from here https://platform.openai.com/api-keys
-DISCORD_BOT_TOKEN: <token> # get this from here https://discord.com/developers/applications
+
+To run you'll need these env vars:
+``` bash
+OPENAI_API_KEY: sk-R-XXXXXXXXXXXXXXXXXXXXXX.... # get this from here https://platform.openai.com/api-keys
+DISCORD_BOT_TOKEN: XXXXXXXXXXXXXXXX.... # get this from here https://discord.com/developers/applications
+DISCORD_SERVER_ID: 8588513XXXXXXXXXXX # right click on the server and hit copy server ID. This is the server the chat commands get installed to
 OPENAI_MODEL: ft-gpt-4o-mini-2024-07-18:personal:xxxxxxxxxxxxx # fine tune here https://platform.openai.com/finetune
 BOT_NAME: lez # what's the name of this bot?
 ```
