@@ -1,7 +1,7 @@
 FROM python:3.11-slim-bookworm as base
 
 RUN apt-get update
-RUN pip install poetry
+RUN pip install --progress-bar off poetry
 
 WORKDIR /chatai/
 
