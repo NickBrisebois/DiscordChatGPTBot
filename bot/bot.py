@@ -1,7 +1,6 @@
 import random
 import discord
 from discord import DMChannel, Intents
-from discord import app_commands
 from discord.ext import commands
 
 from chat_ai.chatai import ChatAI

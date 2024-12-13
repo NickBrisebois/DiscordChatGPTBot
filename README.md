@@ -1,6 +1,6 @@
-# A discord bot that works with fine-tuned OpenAI fine tuned models
+# A discord bot that works with fine-tuned OpenAI models
 
-Rather lazily programmed discord bot that works with any OpenAI models. 
+Rather lazily programmed discord bot that works with any OpenAI (including finetuned) models. 
 
 To install the libraries for it you'll need to install the Python package manager `poetry`
 
