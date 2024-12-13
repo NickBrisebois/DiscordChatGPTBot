@@ -5,13 +5,13 @@ RUN pip install poetry
 
 WORKDIR /chatai/
 
-COPY README.md $WORKDIR
-COPY pyproject.toml $WORKDIR
-COPY poetry.lock /$WORKDIR
+COPY README.md /chatai/
+COPY pyproject.toml /chatai/
+COPY poetry.lock /chatai/
 
 RUN poetry config virtualenvs.create false
 RUN poetry install --no-interaction
 
-COPY . $WORKDIR
+COPY . /chatai/
 
-ENTRYPOINT [ "$WORKDIR/run.sh" ]
+ENTRYPOINT [ "/chatai/run.sh" ]
