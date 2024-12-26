@@ -10,11 +10,13 @@ class ChatBot(commands.Bot):
     def __init__(
         self,
         chat_ai: ChatAI,
+        reaction_ai: ChatAI,
         discord_server_id: str,
         read_all_messages: bool,
         intents: Intents,
     ) -> None:
         self._chat_ai = chat_ai
+        self._reaction_ai = reaction_ai
         self._discord_server_id = discord_server_id
         self._read_all_messages = read_all_messages
         super().__init__(intents=intents, command_prefix="!")
@@ -27,7 +29,7 @@ class ChatBot(commands.Bot):
         print("Logged on as", self.user)
 
     def clear_history(self) -> None:
-        self._chat_ai.clear_history()
+        self._chat_ai.clear_history(clear_all=True)
 
     def set_system_prompt(self, text: str) -> None:
         self._chat_ai.set_system_prompt(text=text)
@@ -36,16 +38,34 @@ class ChatBot(commands.Bot):
     def _at_code(self) -> str:
         return f"<@{self.user.id}>"
 
+    async def _react_to_message(self, message: discord.Message) -> None:
+        channel_id = message.channel.id
+        self._reaction_ai.append_history(
+            channel_id=str(channel_id),
+            role=Role.user,
+            message=message.content,
+        )
+        reaction = await self._reaction_ai.get_response(channel_id=str(channel_id))
+        await message.add_reaction(reaction)
+
     async def on_message(self, message: discord.Message) -> None:
+        if self._chat_ai._bot_name in message.content:
+            await self._react_to_message(message)
+
         if message.author == self.user:
             return
 
         if self._read_all_messages:
             # if read all messages is enabled, we add all messages to the bot history, even if they don't mention the bot
+            if self._at_code in message.content:
+                msg_text = message.content.split(self._at_code)[1]
+            else:
+                msg_text = message.content
+
             self._chat_ai.append_history(
                 channel_id=str(message.channel.id),
                 role=Role.user,
-                message=message.content,
+                message=msg_text,
             )
 
         username = self.user.name + "#" + self.user.discriminator
@@ -62,21 +82,22 @@ class ChatBot(commands.Bot):
         ):
             # if read all messages is disabled, we'll *only* read messages that mention the bot
             if not self._read_all_messages:
-                self._chat_ai.append_history(
-                    channel_id=str(message.channel.id),
-                    role=Role.user,
-                    message=message.content,
-                )
-
-            async with message.channel.typing():
                 if self._at_code in message.content:
                     msg_text = message.content.split(self._at_code)[1]
                 else:
                     msg_text = message.content
 
+                self._chat_ai.append_history(
+                    channel_id=str(message.channel.id),
+                    role=Role.user,
+                    message=msg_text,
+                )
+
+            async with message.channel.typing():
+
                 channel_id = str(message.channel.id)
                 ai_response = await self._chat_ai.get_response(
-                    channel_id=channel_id, input_text=msg_text
+                    channel_id=channel_id
                 )
 
                 self._chat_ai.append_history(

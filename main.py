@@ -16,20 +16,31 @@ def main():
     discord_server_id = environ.get("DISCORD_SERVER_ID")
     read_all_messages = environ.get("READ_ALL_MESSAGES", "false").lower() == "true"
 
-    chat_ai = ChatAI(bot_name=bot_name, model_name=model_name)
+    chat_ai = ChatAI(bot_name=bot_name, chat_history_length=50, model_name=model_name)
+    reaction_ai = ChatAI(
+        bot_name="reactions",
+        model_name="gpt-4o",
+        chat_history_length=0,
+        initial_prompt="You are a reaction emoji bot. Your entire purpose is to take a message and react to it with an emoji. You will ONLY return an emoji, you will not return anything else.",
+    )
     discord_bot = ChatBot(
         chat_ai=chat_ai,
+        reaction_ai=reaction_ai,
         discord_server_id=discord_server_id,
         read_all_messages=read_all_messages,
-        intents=Intents.all()
+        intents=Intents.all(),
     )
 
-    @discord_bot.tree.command(name="clearhistory", description=f"Clear {bot_name}'s history")
+    @discord_bot.tree.command(
+        name="clearhistory", description=f"Clear {bot_name}'s history"
+    )
     async def clear_history(interaction: discord.Interaction):
         discord_bot.clear_history()
         await interaction.response.send_message("my memory is nice and empty :^)")
 
-    @discord_bot.tree.command(name="setprompt", description=f"Tell {bot_name} who he is")
+    @discord_bot.tree.command(
+        name="setprompt", description=f"Tell {bot_name} who he is"
+    )
     @app_commands.describe(new_prompt="New system prompt")
     async def set_prompt(interaction: discord.Interaction, new_prompt: str):
         discord_bot.set_system_prompt(new_prompt)
@@ -38,6 +49,7 @@ def main():
         )
 
     discord_bot.run(discord_token)
+
 
 if __name__ == "__main__":
     main()
