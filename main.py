@@ -21,7 +21,8 @@ def main():
         bot_name="reactions",
         model_name="gpt-4o",
         chat_history_length=0,
-        initial_prompt="You are a reaction emoji bot. Your entire purpose is to take a message and react to it with an emoji. You will ONLY return an emoji, you will not return anything else.",
+        initial_prompt="Before every message, I will supply a list of strings that represent emojis. The list will begin with || and end with || and each emoji will be separated with a ,. After the emojis will be a message, I want you to take the message and choose a relevant emoji. For example, for this ||smile, cry, wave||Hello, you would respond with wave. ONLY respond with the emoji name"
+
     )
     discord_bot = ChatBot(
         chat_ai=chat_ai,

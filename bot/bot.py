@@ -1,6 +1,7 @@
 import random
+from typing import List
 import discord
-from discord import DMChannel, Intents
+from discord import DMChannel, GuildSticker, Intents, Sticker
 from discord.ext import commands
 
 from chat_ai.chatai import ChatAI, Role
@@ -39,21 +40,40 @@ class ChatBot(commands.Bot):
         return f"<@{self.user.id}>"
 
     async def _react_to_message(self, message: discord.Message) -> None:
+        emojis = self._get_emojis(message=message)
         channel_id = message.channel.id
+        input_text = f"||{','.join(emojis.keys())}||{message.content}"
         self._reaction_ai.append_history(
             channel_id=str(channel_id),
             role=Role.user,
-            message=message.content,
+            message=input_text,
         )
         reaction = await self._reaction_ai.get_response(channel_id=str(channel_id))
-        await message.add_reaction(reaction)
+        await message.add_reaction(emojis[reaction])
+
+    async def _light_but_rich_snack(self, message: discord.Message) -> None:
+        sticker = await self.fetch_sticker(1314648578039218176)
+        await message.channel.send(stickers=[sticker])
+
+    def _get_emojis(self, message: discord.Message) -> List[str]:
+        emojis = {}
+        for emoji in message.guild.emojis:
+            emojis[emoji.name] = emoji
+        return emojis
 
     async def on_message(self, message: discord.Message) -> None:
-        if self._chat_ai._bot_name in message.content:
+        if (
+            self._chat_ai._bot_name.lower() in message.content.lower()
+            or random.random() > float(0.95)
+        ):
             await self._react_to_message(message)
 
         if message.author == self.user:
             return
+        
+        if message.stickers:
+            if message.stickers[0].id == 1314648578039218176:
+                await self._light_but_rich_snack(message=message)
 
         if self._read_all_messages:
             # if read all messages is enabled, we add all messages to the bot history, even if they don't mention the bot
