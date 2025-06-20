@@ -32,6 +32,10 @@ def main():
         intents=Intents.all(),
     )
 
+    async def setup_hook(self):
+        # Sync the command tree
+        await self.tree.sync()
+
     @discord_bot.tree.command(
         name="clearhistory", description=f"Clear {bot_name}'s history"
     )
@@ -48,6 +52,25 @@ def main():
         await interaction.response.send_message(
             f"{bot_name} is now prompted with {new_prompt}"
         )
+
+    @discord_bot.tree.command(
+        name="setemojis",
+        description=f"Enable or disable {bot_name}'s emoji reactions",
+    )
+    @app_commands.describe(enabled="Enable or disable emoji reactions")
+    async def set_emojis_enabled(
+        interaction: discord.Interaction, enabled: bool = True
+    ):
+        discord_bot.set_emojis_enabled(enabled)
+        await interaction.response.send_message(
+            f"{bot_name} emoji reactions are now {'enabled' if enabled else 'disabled'}"
+        )
+
+    @discord_bot.tree.context_menu(name="Gigafy")
+    async def gigafy_message(
+        interaction: discord.Interaction, message: discord.Message
+    ):
+        await discord_bot.gigafy_context(interaction=interaction, message=message)
 
     discord_bot.run(discord_token)
 

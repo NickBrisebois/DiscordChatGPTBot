@@ -1,7 +1,8 @@
+import asyncio
 import random
 from typing import List
 import discord
-from discord import DMChannel, GuildSticker, Intents, Sticker
+from discord import DMChannel, Intents
 from discord.ext import commands
 
 from chat_ai.chatai import ChatAI, Role
@@ -20,6 +21,9 @@ class ChatBot(commands.Bot):
         self._reaction_ai = reaction_ai
         self._discord_server_id = discord_server_id
         self._read_all_messages = read_all_messages
+
+        self._emojis_enabled = True
+
         super().__init__(intents=intents, command_prefix="!")
 
     async def setup_hook(self):
@@ -34,6 +38,9 @@ class ChatBot(commands.Bot):
 
     def set_system_prompt(self, text: str) -> None:
         self._chat_ai.set_system_prompt(text=text)
+
+    def set_emojis_enabled(self, enabled: bool) -> None:
+        self._emojis_enabled = enabled
 
     @property
     def _at_code(self) -> str:
@@ -55,22 +62,86 @@ class ChatBot(commands.Bot):
         sticker = await self.fetch_sticker(1314648578039218176)
         await message.channel.send(stickers=[sticker])
 
-    def _get_emojis(self, message: discord.Message) -> List[str]:
+    def _get_emojis(self, message: discord.Message, search_prefix: str | None = None) -> dict[str, discord.Emoji]:
         emojis = {}
         for emoji in message.guild.emojis:
+            if search_prefix and not emoji.name.lower().startswith(search_prefix.lower()):
+                continue
             emojis[emoji.name] = emoji
         return emojis
 
+    # async def gigafy(self, interaction: discord.Interaction) -> None:
+    #     channel = interaction.channel
+
+    #     if not isinstance(channel, discord.TextChannel):
+    #         await interaction.response.send_message(
+    #             "This command can only be used in a text channel."
+    #         )
+    #         return
+
+    #     previous_message: discord.Message | None = None
+    #     async for message in channel.history(limit=2):
+    #         if message.id != interaction.id:
+    #             previous_message = message
+
+    #     if previous_message is None:
+    #         return
+    
+    #     giga_emojis = self._get_emojis(message=previous_message, search_prefix="giga")
+    #     if not giga_emojis:
+    #         await interaction.response.send_message(
+    #             "No giga emojis found in this server."
+    #         )
+    #         return
+
+    #     for emoji in giga_emojis.values():
+    #         try:
+    #             await previous_message.add_reaction(emoji)
+    #         except discord.Forbidden:
+    #             await interaction.response.send_message("I don't have permission to add reactions to that message.")
+    #         except discord.HTTPException as e:
+    #             await interaction.response.send_message(f"Failed to add reaction: {e}")
+
+    #     await interaction.response.send_message(
+    #         f"Gigafied :gigalez:"
+    #     )
+
+    async def gigafy_context(self, interaction: discord.Interaction, message: discord.Message):
+        """Right-click context menu command to gigafy any message"""
+        giga_emojis = self._get_emojis(message=message, search_prefix="giga")
+        
+        if not giga_emojis:
+            await interaction.response.send_message("No 'giga' emojis found in this server.", ephemeral=True)
+            return
+
+        await interaction.response.send_message("Gigafying message...", ephemeral=True)
+        reaction_tasks = [
+            message.add_reaction(emoji) for emoji in giga_emojis.values()
+        ]
+
+        try:
+            results = await asyncio.gather(*reaction_tasks, return_exceptions=True)
+            successful = sum(1 for result in results if not isinstance(result, Exception))
+            failed = len(results) - successful
+            
+            if successful > 0:
+                await interaction.channel.send(f"✅ Added {successful} giga reactions to! (triggered by {interaction.user.mention})")
+            else:
+                await interaction.edit_original_response(content="❌ Failed to add any reactions.")
+        except Exception as e:
+            await interaction.edit_original_response(content=f"Failed to gigafy message :(((( (err: {e})")
+            return
+
+
     async def on_message(self, message: discord.Message) -> None:
-        if (
-            self._chat_ai._bot_name.lower() in message.content.lower()
-            or random.random() > float(0.95)
+        if self._chat_ai._bot_name.lower() in message.content.lower() or (
+            random.random() > float(0.99) and self._emojis_enabled
         ):
             await self._react_to_message(message)
 
         if message.author == self.user:
             return
-        
+
         if message.stickers:
             if message.stickers[0].id == 1314648578039218176:
                 await self._light_but_rich_snack(message=message)
@@ -116,9 +187,7 @@ class ChatBot(commands.Bot):
             async with message.channel.typing():
 
                 channel_id = str(message.channel.id)
-                ai_response = await self._chat_ai.get_response(
-                    channel_id=channel_id
-                )
+                ai_response = await self._chat_ai.get_response(channel_id=channel_id)
 
                 self._chat_ai.append_history(
                     channel_id=channel_id, role=Role.assistant, message=ai_response
