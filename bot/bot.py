@@ -13,13 +13,11 @@ class ChatBot(commands.Bot):
         self,
         chat_ai: ChatAI,
         reaction_ai: ChatAI,
-        discord_server_id: str,
         read_all_messages: bool,
         intents: Intents,
     ) -> None:
         self._chat_ai = chat_ai
         self._reaction_ai = reaction_ai
-        self._discord_server_id = discord_server_id
         self._read_all_messages = read_all_messages
 
         self._emojis_enabled = True
@@ -27,8 +25,11 @@ class ChatBot(commands.Bot):
         super().__init__(intents=intents, command_prefix="!")
 
     async def setup_hook(self):
-        self.tree.copy_global_to(guild=discord.Object(id=self._discord_server_id))
-        await self.tree.sync(guild=discord.Object(id=self._discord_server_id))
+        try:
+            synced = await self.tree.sync()
+            print(f"Synced {len(synced)} commands.")
+        except Exception as e:
+            print(f"Failed to sync commands: {e}")
 
     async def on_ready(self) -> None:
         print("Logged on as", self.user)

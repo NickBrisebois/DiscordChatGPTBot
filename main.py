@@ -13,7 +13,6 @@ def main():
     bot_name = environ.get("BOT_NAME")
     discord_token = environ.get("DISCORD_BOT_TOKEN")
     model_name = environ.get("OPENAI_MODEL")
-    discord_server_id = environ.get("DISCORD_SERVER_ID")
     read_all_messages = environ.get("READ_ALL_MESSAGES", "false").lower() == "true"
 
     chat_ai = ChatAI(bot_name=bot_name, chat_history_length=50, model_name=model_name)
@@ -27,14 +26,9 @@ def main():
     discord_bot = ChatBot(
         chat_ai=chat_ai,
         reaction_ai=reaction_ai,
-        discord_server_id=discord_server_id,
         read_all_messages=read_all_messages,
         intents=Intents.all(),
     )
-
-    async def setup_hook(self):
-        # Sync the command tree
-        await self.tree.sync()
 
     @discord_bot.tree.command(
         name="clearhistory", description=f"Clear {bot_name}'s history"
