@@ -68,43 +68,8 @@ class ChatBot(commands.Bot):
             if search_prefix and not emoji.name.lower().startswith(search_prefix.lower()):
                 continue
             emojis[emoji.name] = emoji
+
         return emojis
-
-    # async def gigafy(self, interaction: discord.Interaction) -> None:
-    #     channel = interaction.channel
-
-    #     if not isinstance(channel, discord.TextChannel):
-    #         await interaction.response.send_message(
-    #             "This command can only be used in a text channel."
-    #         )
-    #         return
-
-    #     previous_message: discord.Message | None = None
-    #     async for message in channel.history(limit=2):
-    #         if message.id != interaction.id:
-    #             previous_message = message
-
-    #     if previous_message is None:
-    #         return
-    
-    #     giga_emojis = self._get_emojis(message=previous_message, search_prefix="giga")
-    #     if not giga_emojis:
-    #         await interaction.response.send_message(
-    #             "No giga emojis found in this server."
-    #         )
-    #         return
-
-    #     for emoji in giga_emojis.values():
-    #         try:
-    #             await previous_message.add_reaction(emoji)
-    #         except discord.Forbidden:
-    #             await interaction.response.send_message("I don't have permission to add reactions to that message.")
-    #         except discord.HTTPException as e:
-    #             await interaction.response.send_message(f"Failed to add reaction: {e}")
-
-    #     await interaction.response.send_message(
-    #         f"Gigafied :gigalez:"
-    #     )
 
     async def gigafy_context(self, interaction: discord.Interaction, message: discord.Message):
         """Right-click context menu command to gigafy any message"""
