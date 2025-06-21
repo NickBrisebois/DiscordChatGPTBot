@@ -90,10 +90,8 @@ class ChatBot(commands.Bot):
             successful = sum(1 for result in results if not isinstance(result, Exception))
             failed = len(results) - successful
             
-            if successful > 0:
-                await interaction.channel.send(f"✅ Added {successful} giga reactions to! (triggered by {interaction.user.mention})")
-            else:
-                await interaction.edit_original_response(content="❌ Failed to add any reactions.")
+            if failed > 0:
+                await interaction.edit_original_response(content=f"❌ Failed to {failed} any reactions.")
         except Exception as e:
             await interaction.edit_original_response(content=f"Failed to gigafy message :(((( (err: {e})")
             return
