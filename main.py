@@ -112,7 +112,18 @@ def main():
     async def push_memory(
         interaction: discord.Interaction,
         number_messages: int = 10,
-    ) -> None: ...
+    ) -> None:
+        try:
+            await interaction.response.defer()
+
+            if interaction.channel:
+                await discord_bot.load_channel_history(
+                    channel=interaction.channel, num_messages=number_messages
+                )
+
+                await interaction.followup.send("Injected memory juice")
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
 
     discord_bot.run(discord_token)
 

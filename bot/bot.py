@@ -5,7 +5,7 @@ import discord
 from discord import DMChannel, Intents
 from discord.ext import commands
 
-from chat_ai.chatai import ChatAI, ChatAIException, Role
+from chat_ai.chatai import ChannelMemoryItem, ChatAI, ChatAIException, Role
 
 REPLY_CHANCE = 0.01
 EMOJI_REPLY_CHANCE = 0.005
@@ -62,7 +62,37 @@ class ChatBot(commands.Bot):
         reaction = await self._reaction_ai.get_response(
             channel_id=str(channel_id), message_text=input_text
         )
-        await message.add_reaction(emojis[reaction])
+
+        if reaction in emojis:
+            await message.add_reaction(emojis[reaction])
+
+    async def load_channel_history(
+        self, channel: discord.TextChannel, num_messages: int
+    ) -> None:
+        messages = []
+        async for message in channel.history(limit=num_messages):
+            if message.author == self.user:
+                messages.append((message, Role.assistant))
+            else:
+                messages.append((message, Role.user))
+
+        messages.reverse()
+
+        memory_items = [
+            ChannelMemoryItem(
+                text=message.content,
+                username=message.author.display_name
+                if role == Role.user
+                else self._chat_ai._bot_name,
+                role=role,
+            )
+            for message, role in messages
+        ]
+
+        if memory_items:
+            self._chat_ai.initialise_channel_history(
+                channel_id=str(channel.id), messages=memory_items
+            )
 
     async def _light_but_rich_snack(self, message: discord.Message) -> None:
         sticker = await self.fetch_sticker(1314648578039218176)
@@ -175,8 +205,16 @@ class ChatBot(commands.Bot):
             async with message.channel.typing():
                 try:
                     ai_response = await self._chat_ai.get_response(
-                        channel_id=str(message.channel.id), message_text=msg_text
+                        channel_id=str(message.channel.id),
+                        message_text=msg_text,
+                        reply_to_username=message.author.name,
                     )
+
+                    if has_mentioned:
+                        reply_to = await message.channel.fetch_message(message.id)
+                        await message.channel.send(ai_response, reference=reply_to)
+                        return
+
                     await message.channel.send(ai_response)
                 except ChatAIException as e:
                     await message.channel.send(
