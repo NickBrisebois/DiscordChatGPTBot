@@ -78,7 +78,7 @@ class ChannelMemory:
 
 class ChatAI:
     _conversation_history: dict[str, ChannelMemory]
-    _primary_system_prompt: ChannelMemoryItem
+    _primary_system_prompts: list[ChannelMemoryItem]
 
     def __init__(
         self,
@@ -106,7 +106,7 @@ class ChatAI:
 
     def _get_system_prompts(self, channel_id: str) -> list[ChannelMemoryItem]:
         return [
-            self._primary_system_prompt,
+            *self._primary_system_prompts,
             ChannelMemoryItem(
                 role=Role.system,
                 text=f"You are speaking in the Discord channel named {channel_id}",
@@ -139,11 +139,21 @@ class ChatAI:
         )
 
     def set_system_prompt(self, text: str) -> None:
-        self._primary_system_prompt = ChannelMemoryItem(
-            role=Role.system,
-            username=self._bot_name,
-            text=text,
-        )
+        self._primary_system_prompts = [
+            ChannelMemoryItem(
+                role=Role.system,
+                username=self._bot_name,
+                text=text,
+            ),
+            ChannelMemoryItem(
+                role=Role.system,
+                username=self._bot_name,
+                text=(
+                    "If you notice that you are repeating the same response or wording, you MUST change your "
+                    "answer, add new information, or acknowledge the repetition explicitly."
+                ),
+            ),
+        ]
 
         for channel_id in self._conversation_history:
             self._conversation_history[
@@ -171,10 +181,10 @@ class ChatAI:
                 model=self._model_name,
                 messages=self._conversation_history[channel_id].export_as_openai_type(),
                 max_completion_tokens=MAX_TOKENS,
-                temperature=0.6,
+                temperature=0.85,
                 top_p=0.9,
-                frequency_penalty=0.2,
-                presence_penalty=0.1,
+                frequency_penalty=0.9,
+                presence_penalty=0.6,
                 response_format={"type": "text"},
             )
 
