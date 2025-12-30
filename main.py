@@ -102,6 +102,18 @@ def main():
     ):
         await discord_bot.emojify_message(interaction=interaction, message=message)
 
+    @discord_bot.tree.command(
+        name="pushmem",
+        description=f"Push a number of messages back in the channel's history into {bot_name}'s memory",
+    )
+    @app_commands.describe(
+        number_messages=f"Number of messages in chat history to load into {bot_name}'s memory"
+    )
+    async def push_memory(
+        interaction: discord.Interaction,
+        number_messages: int = 10,
+    ) -> None: ...
+
     discord_bot.run(discord_token)
 
 
