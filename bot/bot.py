@@ -31,7 +31,7 @@ class ChatBot(commands.Bot):
 
     async def setup_hook(self):
         try:
-            synced = await self.tree.sync(guild=self._guild_id)
+            synced = await self.tree.sync()
             print(f"Synced {len(synced)} commands.")
         except Exception as e:
             print(f"Failed to sync commands: {e}")
@@ -94,6 +94,7 @@ class ChatBot(commands.Bot):
                 channel_id=str(channel.id), messages=memory_items
             )
 
+    # TODO: make this a generic reuseable thing for any server
     async def _light_but_rich_snack(self, message: discord.Message) -> None:
         sticker = await self.fetch_sticker(1314648578039218176)
         await message.channel.send(stickers=[sticker])
@@ -167,11 +168,10 @@ class ChatBot(commands.Bot):
         self, num_messages: int, channel: discord.TextChannel
     ) -> None:
         for i in range(num_messages):
-            pass
-            # await self._send_message(
-            #     channel_id=str(channel.id),
-            #     message = await self._chat_ai.get_response(channel_id=str(channel.id)),
-            # )
+            await self._chat_ai.get_response(
+                channel_id=str(channel.id),
+                message_text="I'm lonely",
+            )
 
     async def on_message(self, message: discord.Message) -> None:
         if self._chat_ai._bot_name.lower() in message.content.lower() or (

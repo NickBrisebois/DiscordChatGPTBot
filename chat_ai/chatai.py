@@ -29,6 +29,9 @@ class ChannelMemoryItem:
     username: str | None
     role: Role
 
+    def _clean_username_for_openai(self, username: str | None) -> str | None:
+        return username.replace(" ", "_").replace("-", "_") if username else None
+
     def to_openai_type(self) -> ChatCompletionMessageParam:
         return {
             Role.system: ChatCompletionSystemMessageParam,
@@ -37,7 +40,7 @@ class ChannelMemoryItem:
         }[self.role](
             content=[ChatCompletionContentPartTextParam(type="text", text=self.text)],
             role=self.role.value,
-            name=self.username,
+            name=self._clean_username_for_openai(self.username),
         )
 
 
