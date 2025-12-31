@@ -1,5 +1,5 @@
 import enum
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 
 from openai import AsyncOpenAI
 from openai.types.chat import (
@@ -21,6 +21,14 @@ class Role(enum.Enum):
     assistant = "assistant"
     system = "system"
     user = "user"
+
+
+@dataclass
+class AIParameters:
+    temperature: float = field(default=0.75)
+    top_p: float = field(default=0.9)
+    frequency_penalty: float = field(default=0.7)
+    presence_penalty: float = field(default=0.4)
 
 
 @dataclass
@@ -82,6 +90,7 @@ class ChannelMemory:
 class ChatAI:
     _conversation_history: dict[str, ChannelMemory]
     _primary_system_prompts: list[ChannelMemoryItem]
+    _ai_parameters: AIParameters
 
     def __init__(
         self,
@@ -89,6 +98,7 @@ class ChatAI:
         model_name: str,
         chat_history_length: int,
         initial_prompt: str | None = None,
+        ai_parameters: AIParameters = AIParameters(),
     ):
         if not initial_prompt:
             initial_prompt = (
@@ -106,6 +116,9 @@ class ChatAI:
 
         self._model_name = model_name
         self._client = AsyncOpenAI()
+
+        self._ai_parameters = ai_parameters
+        print(f"Starting ChatAI with ai_parameters: {asdict(self._ai_parameters)}")
 
     def _get_system_prompts(self, channel_id: str) -> list[ChannelMemoryItem]:
         return [
@@ -184,11 +197,8 @@ class ChatAI:
                 model=self._model_name,
                 messages=self._conversation_history[channel_id].export_as_openai_type(),
                 max_completion_tokens=MAX_TOKENS,
-                temperature=0.75,
-                top_p=0.9,
-                frequency_penalty=0.7,
-                presence_penalty=0.4,
                 response_format={"type": "text"},
+                **asdict(self._ai_parameters),
             )
 
             response_text = (

@@ -4,7 +4,7 @@ import discord
 from discord import Intents, app_commands
 
 from bot.bot import ChatBot
-from chat_ai.chatai import ChatAI
+from chat_ai.chatai import AIParameters, ChatAI
 
 
 def main():
@@ -16,7 +16,25 @@ def main():
     guild_id = environ["DISCORD_SERVER_ID"]
     read_all_messages = environ.get("READ_ALL_MESSAGES", "false").lower() == "true"
 
-    chat_ai = ChatAI(bot_name=bot_name, chat_history_length=50, model_name=model_name)
+    # AI parameter overrides
+    ai_temp = float(environ.get("AI_TEMPERATURE", "0.7"))
+    ai_top_p = float(environ.get("AI_TOP_P", "0.9"))
+    ai_frequency_penalty = float(environ.get("AI_FREQUENCY_PENALTY", "0.7"))
+    ai_presence_penalty = float(environ.get("AI_PRESENCE_PENALTY", "0.4"))
+
+    ai_parameters = AIParameters(
+        temperature=ai_temp,
+        top_p=ai_top_p,
+        frequency_penalty=ai_frequency_penalty,
+        presence_penalty=ai_presence_penalty,
+    )
+
+    chat_ai = ChatAI(
+        bot_name=bot_name,
+        chat_history_length=50,
+        model_name=model_name,
+        ai_parameters=ai_parameters,
+    )
     reaction_ai = ChatAI(
         bot_name="reactions",
         model_name="gpt-4o",
