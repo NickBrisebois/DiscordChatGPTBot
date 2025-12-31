@@ -184,10 +184,10 @@ class ChatAI:
                 model=self._model_name,
                 messages=self._conversation_history[channel_id].export_as_openai_type(),
                 max_completion_tokens=MAX_TOKENS,
-                temperature=0.85,
+                temperature=0.75,
                 top_p=0.9,
-                frequency_penalty=0.9,
-                presence_penalty=0.6,
+                frequency_penalty=0.7,
+                presence_penalty=0.4,
                 response_format={"type": "text"},
             )
 
