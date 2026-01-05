@@ -2,13 +2,55 @@ import asyncio
 import random
 
 import discord
-from discord import DMChannel, Intents
+from discord import DMChannel, Emoji, Intents, PartialEmoji
 from discord.ext import commands
 
 from chat_ai.chatai import ChannelMemoryItem, ChatAI, ChatAIException, Role
 
+EmojiInputType = Emoji | PartialEmoji | str
+
 REPLY_CHANCE = 0.01
 EMOJI_REPLY_CHANCE = 0.005
+
+
+ALPHANUMERIC_TO_EMOJI_MAP = {
+    "a": "🇦",
+    "b": "🇧",
+    "c": "🇨",
+    "d": "🇩",
+    "e": "🇪",
+    "f": "🇫",
+    "g": "🇬",
+    "h": "🇭",
+    "i": "🇮",
+    "j": "🇯",
+    "k": "🇰",
+    "l": "🇱",
+    "m": "🇲",
+    "n": "🇳",
+    "o": "🇴",
+    "p": "🇵",
+    "q": "🇶",
+    "r": "🇷",
+    "s": "🇸",
+    "t": "🇹",
+    "u": "🇺",
+    "v": "🇻",
+    "w": "🇼",
+    "x": "🇽",
+    "y": "🇾",
+    "z": "🇿",
+    "0": "0️⃣",
+    "1": "1️⃣",
+    "2": "2️⃣",
+    "3": "3️⃣",
+    "4": "4️⃣",
+    "5": "5️⃣",
+    "6": "6️⃣",
+    "7": "7️⃣",
+    "8": "8️⃣",
+    "9": "9️⃣",
+}
 
 
 class ChatBot(commands.Bot):
@@ -101,7 +143,7 @@ class ChatBot(commands.Bot):
 
     def _get_emojis(
         self, message: discord.Message, search_prefix: str | None = None
-    ) -> dict[str, discord.Emoji]:
+    ) -> dict[str, EmojiInputType]:
         emojis = {}
         for emoji in message.guild.emojis:
             if search_prefix and not emoji.name.lower().startswith(
@@ -116,14 +158,19 @@ class ChatBot(commands.Bot):
         self,
         interaction: discord.Interaction,
         message: discord.Message,
-        emoji_prefix: str = "",
+        emojis: dict[str, EmojiInputType] | None = None,
+        emoji_prefix: str | None = None,
     ):
         """Right-click context menu command to emojify any message"""
-        emojis = self._get_emojis(message=message, search_prefix=emoji_prefix)
+
+        if emoji_prefix:
+            emojis = self._get_emojis(message=message, search_prefix=emoji_prefix)
+        elif not emojis:
+            raise ValueError("emojis or emoji_prefix must be provided")
 
         if not emojis:
             await interaction.response.send_message(
-                "No emojis found in this server.", ephemeral=True
+                "No emojis found :(", ephemeral=True
             )
             return
 
@@ -149,7 +196,7 @@ class ChatBot(commands.Bot):
 
         if successful > 0:
             await interaction.edit_original_response(
-                content=f"✅ Successfully added {successful} <{emoji_prefix}> emojis."
+                content=f"✅ Successfully added {successful} emojis."
             )
 
     async def mikuify_context(
@@ -163,6 +210,43 @@ class ChatBot(commands.Bot):
     ):
         """Right-click context menu command to gigafy any message"""
         await self.emojify_message(interaction, message, emoji_prefix="giga")
+
+    async def _textify(
+        self, interaction: discord.Interaction, message: discord.Message, text: str
+    ):
+        """Right-click context menu command to textify any message"""
+        TEXT_SIZE_MAX = 20  # discord limits emojis on a message to 20
+        text = text.lower().strip()
+
+        if not text:
+            await interaction.response.send_message(
+                "What am I supposed to do with an empty string of text?", ephemeral=True
+            )
+            return
+        if len(text) > TEXT_SIZE_MAX:
+            await interaction.response.send_message(
+                f"Text is too long to textify :( (Discord's max is {TEXT_SIZE_MAX})",
+                ephemeral=True,
+            )
+            return
+
+        emojis_to_add = {
+            char: emoji
+            for char, emoji in ALPHANUMERIC_TO_EMOJI_MAP.items()
+            if char in text
+        }
+        await self.emojify_message(
+            interaction=interaction,
+            message=message,
+            emojis={emoji: char for char, emoji in zip(text, emojis_to_add) if emoji},
+        )
+
+    async def textify_context(
+        self,
+        interaction: discord.Interaction,
+        message: discord.Message,
+    ) -> None:
+        await interaction.response.send_modal(SpellTextModal(self, message))
 
     async def bot_is_lonely(
         self, num_messages: int, channel: discord.TextChannel
@@ -224,3 +308,25 @@ class ChatBot(commands.Bot):
                     await message.channel.send(
                         f"😵 {username} *really* broke and couldn't respond (what did you do?) (error: {e})"
                     )
+
+
+class SpellTextModal(discord.ui.Modal, title="Textify 😎"):
+    def __init__(self, bot: ChatBot, message: discord.Message):
+        super().__init__()
+        self.bot = bot
+        self.message = message
+
+    text_input = discord.ui.TextInput(
+        label="Text to spell out",
+        placeholder="Enter text to spell out",
+        style=discord.TextStyle.short,
+        required=True,
+        max_length=20,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await self.bot._textify(
+            interaction,
+            self.message,
+            self.text_input.value,
+        )

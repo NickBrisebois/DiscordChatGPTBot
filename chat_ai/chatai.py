@@ -78,7 +78,7 @@ class ChannelMemory:
 
     @property
     def messages(self) -> list[ChannelMemoryItem]:
-        return self.system_prompts + self._messages
+        return self._messages + self.system_prompts
 
     def export_as_openai_type(self) -> list[ChatCompletionMessageParam]:
         return [item.to_openai_type() for item in self.messages]
@@ -102,10 +102,9 @@ class ChatAI:
     ):
         if not initial_prompt:
             initial_prompt = (
-                f"You are a Discord chat bot with the name: {bot_name}, trained on a private friend group's chat history."
-                "Your personality is casual, sarcastic, and sometimes chaotic, but generally helpful."
-                "You speak like a human in a group chat on Discord. If you are missing information, you may request "
-                "tools using <SEARCH: query>. Only do this when it would genuinely help."
+                f"You are in a Discord server with your friends and enemies and your name is {bot_name}"
+                "Your personality is casual, sarcastic, and often chaotic"
+                "You should respond to people with multiple sentences when appropriate. Feel free to expand your response as needed."
             )
 
         self._bot_name = bot_name
@@ -123,11 +122,6 @@ class ChatAI:
     def _get_system_prompts(self, channel_id: str) -> list[ChannelMemoryItem]:
         return [
             *self._primary_system_prompts,
-            ChannelMemoryItem(
-                role=Role.system,
-                text=f"You are speaking in the Discord channel named {channel_id}",
-                username=self._bot_name,
-            ),
         ]
 
     def initialise_channel_history(

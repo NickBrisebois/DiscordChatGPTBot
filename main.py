@@ -120,6 +120,12 @@ def main():
     ):
         await discord_bot.emojify_message(interaction=interaction, message=message)
 
+    @discord_bot.tree.context_menu(name="Textify")
+    async def textify_message(
+        interaction: discord.Interaction, message: discord.Message
+    ):
+        await discord_bot.textify_context(interaction, message)
+
     @discord_bot.tree.command(
         name="pushmem",
         description=f"Push a number of messages back in the channel's history into {bot_name}'s memory",
