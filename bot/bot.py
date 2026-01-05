@@ -230,15 +230,14 @@ class ChatBot(commands.Bot):
             )
             return
 
-        emojis_to_add = {
-            char: emoji
-            for char, emoji in ALPHANUMERIC_TO_EMOJI_MAP.items()
-            if char in text
-        }
+        emojis_to_add = {}
+        for t in text:
+            emojis_to_add[t] = ALPHANUMERIC_TO_EMOJI_MAP.get(t, "")
+
         await self.emojify_message(
             interaction=interaction,
             message=message,
-            emojis={emoji: char for char, emoji in zip(text, emojis_to_add) if emoji},
+            emojis=emojis_to_add,
         )
 
     async def textify_context(
