@@ -1,9 +1,16 @@
+# personal files
+_scripts/
+.vscode/
+.zed/
+junk/
+scraped_data/
+tools/
+**/*.jsonl
+**/*.json
+
 __pycache__/
 *.py[cod]
 *$py.class
-_scripts/
-.vscode/
-junk/
 
 # PyBuilder
 .pybuilder/

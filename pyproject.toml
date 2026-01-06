@@ -1,16 +1,12 @@
-[tool.poetry]
+[project]
 name = "DiscordChatGPTBot"
 version = "0.1.0"
 description = ""
-authors = ["NickBrisebois <nickbrisebois12@gmail.com>"]
+authors = ["NickBrisebois <email@nick-b.ca>"]
 readme = "README.md"
+requires-python = ">=3.12"
 package-mode = false
-
-[tool.poetry.dependencies]
-python = "^3.11"
-openai = "^1.17.1"
-discord = "^2.3.2"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+dependencies = [
+    "openai>=2.14.0",
+    "discord.py>=2.6.4"
+]
