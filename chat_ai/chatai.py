@@ -99,12 +99,14 @@ class ChatAI:
         chat_history_length: int,
         initial_prompt: str | None = None,
         ai_parameters: AIParameters = AIParameters(),
+        debug: bool = False,
     ):
         if not initial_prompt:
             initial_prompt = (
-                f"You are in a Discord server with your friends and enemies and your name is {bot_name}"
-                "Your personality is casual, sarcastic, and often chaotic"
-                "You should respond to people with multiple sentences when appropriate. Feel free to expand your response as needed."
+                f"Your name is {bot_name}. Reply directly to the most recent user message."
+                "Stay on topic unless the user explicitly asks for randomness."
+                "Use casual Discord tone and humor when appropriate."
+                "Do not ignore the user's question."
             )
 
         self._bot_name = bot_name
@@ -117,6 +119,7 @@ class ChatAI:
         self._client = AsyncOpenAI()
 
         self._ai_parameters = ai_parameters
+        self._debug = debug
         print(f"Starting ChatAI with ai_parameters: {asdict(self._ai_parameters)}")
 
     def _get_system_prompts(self, channel_id: str) -> list[ChannelMemoryItem]:
@@ -155,14 +158,14 @@ class ChatAI:
                 username=self._bot_name,
                 text=text,
             ),
-            ChannelMemoryItem(
-                role=Role.system,
-                username=self._bot_name,
-                text=(
-                    "If you notice that you are repeating the same response or wording, you MUST change your "
-                    "answer, add new information, or acknowledge the repetition explicitly."
-                ),
-            ),
+            # ChannelMemoryItem(
+            #     role=Role.system,
+            #     username=self._bot_name,
+            #     text=(
+            #         "If you notice that you are repeating the same response or wording, you MUST change your "
+            #         "answer, add new information, or acknowledge the repetition explicitly."
+            #     ),
+            # ),
         ]
 
         for channel_id in self._conversation_history:
@@ -201,6 +204,9 @@ class ChatAI:
             )
 
             self._append_channel_history(channel_id, Role.assistant, response_text)
+            if self._debug:
+                response_text = f"DEBUG: {response_text}"
+
             return response_text
         except Exception as e:
             print(f"{__name__} get_response error: {e}")

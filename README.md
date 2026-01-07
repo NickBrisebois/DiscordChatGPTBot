@@ -1,12 +1,13 @@
 # A discord bot that works with fine-tuned OpenAI models
 
-Rather lazily programmed discord bot that works with any OpenAI (including finetuned) models. 
+A Discord bot that wraps around OpenAI models via their API. Can either be set to use a
+fine-tuned model or one of the base models.
 
-To install the libraries for it you'll need to install the Python package manager `poetry`
+To install the libraries for it you'll need to install the Python package manager: [uv](https://docs.astral.sh/uv/)
 
-Once you have poetry, enter the cloned directory in your terminal and type
+Once you have `uv`, enter the cloned directory in your terminal and type
 ```bash
-poetry install
+uv sync
 ```
 
 To run you'll need these env vars:

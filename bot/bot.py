@@ -58,13 +58,13 @@ class ChatBot(commands.Bot):
         self,
         chat_ai: ChatAI,
         reaction_ai: ChatAI,
-        read_all_messages: bool,
         intents: Intents,
         guild_id: str | None = None,
+        debug: bool = False,
     ) -> None:
         self._chat_ai = chat_ai
+        self._debug = debug
         self._reaction_ai = reaction_ai
-        self._read_all_messages = read_all_messages
         self._guild_id = discord.Object(id=str(guild_id)) if guild_id else None
 
         self._emojis_enabled = True
