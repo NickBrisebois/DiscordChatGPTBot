@@ -2,10 +2,10 @@ from os import environ
 from typing import Any
 
 import discord
+from chat_ai.ai_handler import AIParameters, ChatAIHandler
 from discord import Intents, app_commands
 
 from bot.bot import ChatBot
-from chat_ai.chatai import AIParameters, ChatAI
 
 
 def __parse_env_bool(val: str) -> bool:
@@ -57,14 +57,14 @@ def main():
         presence_penalty=ai_presence_penalty,
     )
 
-    chat_ai = ChatAI(
+    chat_ai = ChatAIHandler(
         bot_name=bot_name,
         chat_history_length=50,
         model_name=model_name,
         ai_parameters=ai_parameters,
         debug=debug,
     )
-    reaction_ai = ChatAI(
+    reaction_ai = ChatAIHandler(
         bot_name="reactions",
         model_name="gpt-4o",
         chat_history_length=0,

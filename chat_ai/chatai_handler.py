@@ -1,5 +1,5 @@
 import enum
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 
 from openai import AsyncOpenAI
 from openai.types.chat import (
@@ -9,6 +9,8 @@ from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
+
+from conf.config_handler import AIParameters
 
 MAX_TOKENS = 500
 
@@ -21,14 +23,6 @@ class Role(enum.Enum):
     assistant = "assistant"
     system = "system"
     user = "user"
-
-
-@dataclass
-class AIParameters:
-    temperature: float = field(default=0.75)
-    top_p: float = field(default=0.9)
-    frequency_penalty: float = field(default=0.7)
-    presence_penalty: float = field(default=0.4)
 
 
 @dataclass
@@ -87,7 +81,7 @@ class ChannelMemory:
         self._messages = []
 
 
-class ChatAI:
+class ChatAIHandler:
     _conversation_history: dict[str, ChannelMemory]
     _primary_system_prompts: list[ChannelMemoryItem]
     _ai_parameters: AIParameters
