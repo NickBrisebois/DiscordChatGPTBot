@@ -10,7 +10,7 @@ from openai.types.chat import (
     ChatCompletionUserMessageParam,
 )
 
-from conf.config_handler import AIParameters
+from conf.config_types import AIParametersConfig
 
 MAX_TOKENS = 500
 
@@ -84,15 +84,15 @@ class ChannelMemory:
 class ChatAIHandler:
     _conversation_history: dict[str, ChannelMemory]
     _primary_system_prompts: list[ChannelMemoryItem]
-    _ai_parameters: AIParameters
+    _ai_parameters: AIParametersConfig
 
     def __init__(
         self,
         bot_name: str,
         model_name: str,
         chat_history_length: int,
+        ai_parameters: AIParametersConfig,
         initial_prompt: str | None = None,
-        ai_parameters: AIParameters = AIParameters(),
         debug: bool = False,
     ):
         if not initial_prompt:

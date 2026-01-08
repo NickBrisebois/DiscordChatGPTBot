@@ -1,11 +1,15 @@
+import argparse
+import sys
 from os import environ
+from pathlib import Path
 from typing import Any
 
 import discord
-from chat_ai.ai_handler import AIParameters, ChatAIHandler
 from discord import Intents, app_commands
 
 from bot.bot import ChatBot
+from chat_ai.chatai_handler import ChatAIHandler
+from conf.config_handler import ConfigHandler, InvalidConfigException
 
 
 def __parse_env_bool(val: str) -> bool:
@@ -35,27 +39,39 @@ def __get_env_value(
 def main():
     # Configs
     # note: OPENAI_API_KEY is required but the OpenAI library grabs it on its own
-    _ = __get_env_value("OPENAI_API_KEY", required=True)
-    bot_name = __get_env_value("BOT_NAME", default="DiscordBot", required=False)
-    debug = __get_env_value("DEBUG", default=False, parse_as=bool, required=False)
-    discord_token = __get_env_value("DISCORD_BOT_TOKEN", required=True)
-    model_name = __get_env_value("OPENAI_MODEL", required=True)
-    guild_id = __get_env_value("DISCORD_SERVER_ID", required=True)
+    # _ = __get_env_value("OPENAI_API_KEY", required=True)
+    # bot_name = __get_env_value("BOT_NAME", default="DiscordBot", required=False)
+    # debug = __get_env_value("DEBUG", default=False, parse_as=bool, required=False)
+    # discord_token = __get_env_value("DISCORD_BOT_TOKEN", required=True)
+    # model_name = __get_env_value("OPENAI_MODEL", required=True)
+    # guild_id = __get_env_value("DISCORD_SERVER_ID", required=True)
 
-    # AI parameter overrides
-    ai_temp = __get_env_value("AI_TEMPERATURE", "0.7", parse_as=float)
-    ai_top_p = __get_env_value("AI_TOP_P", "0.9", parse_as=float)
-    ai_frequency_penalty = __get_env_value(
-        "AI_FREQUENCY_PENALTY", "0.7", parse_as=float
-    )
-    ai_presence_penalty = __get_env_value("AI_PRESENCE_PENALTY", "0.4", parse_as=float)
+    # # AI parameter overrides
+    # ai_temp = __get_env_value("AI_TEMPERATURE", "0.7", parse_as=float)
+    # ai_top_p = __get_env_value("AI_TOP_P", "0.9", parse_as=float)
+    # ai_frequency_penalty = __get_env_value(
+    #     "AI_FREQUENCY_PENALTY", "0.7", parse_as=float
+    # )
+    # ai_presence_penalty = __get_env_value("AI_PRESENCE_PENALTY", "0.4", parse_as=float)
 
-    ai_parameters = AIParameters(
-        temperature=ai_temp,
-        top_p=ai_top_p,
-        frequency_penalty=ai_frequency_penalty,
-        presence_penalty=ai_presence_penalty,
-    )
+    # ai_parameters = AIParameters(
+    #     temperature=ai_temp,
+    #     top_p=ai_top_p,
+    #     frequency_penalty=ai_frequency_penalty,
+    #     presence_penalty=ai_presence_penalty,
+    # )
+
+    args = argparse.ArgumentParser()
+    args.add_argument("--config", default="config.toml")
+    args = args.parse_args()
+
+    config_handler = ConfigHandler(config_file_path=Path(args.config))
+
+    try:
+        config = config_handler.load_config()
+    except InvalidConfigException as e:
+        print(e)
+        sys.exit(1)
 
     chat_ai = ChatAIHandler(
         bot_name=bot_name,

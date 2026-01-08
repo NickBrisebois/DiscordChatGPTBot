@@ -8,6 +8,8 @@ tools/
 **/*.jsonl
 **/*.json
 
+config.toml
+
 __pycache__/
 *.py[cod]
 *$py.class

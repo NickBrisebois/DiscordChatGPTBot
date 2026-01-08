@@ -1,0 +1,20 @@
+# Example configuration file for DiscordChatGPTBot
+
+bot_name = "DiscordChatGPTBot"
+debug = false
+
+[discord]
+guild_id = "1234567890"
+discord_token = "your_discord_token_here"
+
+[openai]
+api_key = "your_openai_api_key_here"
+
+    [openai.parameters]
+    model_name = "gpt-3.5-turbo"  # Name of the model to use for completions
+    max_tokens = 500              # Maximum number of tokens to generate in the completion
+    max_history_size = 20         # Maximum number of messages to keep in the conversation history
+    temperature = 0.7             # Temperature for sampling
+    top_p = 1.0                   # Top-p sampling
+    frequency_penalty = 0.0       # Frequency penalty for repetition
+    presence_penalty = 0.0        # Presence penalty for new topics
