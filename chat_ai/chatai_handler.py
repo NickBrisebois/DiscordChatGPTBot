@@ -1,5 +1,5 @@
 import enum
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 
 from openai import AsyncOpenAI
 from openai.types.chat import (
@@ -9,6 +9,8 @@ from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
 )
+
+from config import AIParametersConfig
 
 MAX_TOKENS = 500
 
@@ -21,14 +23,6 @@ class Role(enum.Enum):
     assistant = "assistant"
     system = "system"
     user = "user"
-
-
-@dataclass
-class AIParameters:
-    temperature: float = field(default=0.75)
-    top_p: float = field(default=0.9)
-    frequency_penalty: float = field(default=0.7)
-    presence_penalty: float = field(default=0.4)
 
 
 @dataclass
@@ -87,18 +81,18 @@ class ChannelMemory:
         self._messages = []
 
 
-class ChatAI:
+class ChatAIHandler:
     _conversation_history: dict[str, ChannelMemory]
     _primary_system_prompts: list[ChannelMemoryItem]
-    _ai_parameters: AIParameters
+    _ai_parameters: AIParametersConfig
 
     def __init__(
         self,
         bot_name: str,
         model_name: str,
         chat_history_length: int,
+        ai_parameters: AIParametersConfig,
         initial_prompt: str | None = None,
-        ai_parameters: AIParameters = AIParameters(),
         debug: bool = False,
     ):
         if not initial_prompt:
@@ -158,14 +152,6 @@ class ChatAI:
                 username=self._bot_name,
                 text=text,
             ),
-            # ChannelMemoryItem(
-            #     role=Role.system,
-            #     username=self._bot_name,
-            #     text=(
-            #         "If you notice that you are repeating the same response or wording, you MUST change your "
-            #         "answer, add new information, or acknowledge the repetition explicitly."
-            #     ),
-            # ),
         ]
 
         for channel_id in self._conversation_history:

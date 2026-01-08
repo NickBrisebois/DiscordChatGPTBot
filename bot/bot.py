@@ -5,7 +5,13 @@ import discord
 from discord import DMChannel, Emoji, Intents, PartialEmoji
 from discord.ext import commands
 
-from chat_ai.chatai import ChannelMemoryItem, ChatAI, ChatAIException, Role
+from bot.constants import ALPHANUMERIC_TO_EMOJI_MAP
+from chat_ai.chatai_handler import (
+    ChannelMemoryItem,
+    ChatAIException,
+    ChatAIHandler,
+    Role,
+)
 
 EmojiInputType = Emoji | PartialEmoji | str
 
@@ -13,51 +19,11 @@ REPLY_CHANCE = 0.01
 EMOJI_REPLY_CHANCE = 0.005
 
 
-ALPHANUMERIC_TO_EMOJI_MAP = {
-    "a": "🇦",
-    "b": "🇧",
-    "c": "🇨",
-    "d": "🇩",
-    "e": "🇪",
-    "f": "🇫",
-    "g": "🇬",
-    "h": "🇭",
-    "i": "🇮",
-    "j": "🇯",
-    "k": "🇰",
-    "l": "🇱",
-    "m": "🇲",
-    "n": "🇳",
-    "o": "🇴",
-    "p": "🇵",
-    "q": "🇶",
-    "r": "🇷",
-    "s": "🇸",
-    "t": "🇹",
-    "u": "🇺",
-    "v": "🇻",
-    "w": "🇼",
-    "x": "🇽",
-    "y": "🇾",
-    "z": "🇿",
-    "0": "0️⃣",
-    "1": "1️⃣",
-    "2": "2️⃣",
-    "3": "3️⃣",
-    "4": "4️⃣",
-    "5": "5️⃣",
-    "6": "6️⃣",
-    "7": "7️⃣",
-    "8": "8️⃣",
-    "9": "9️⃣",
-}
-
-
 class ChatBot(commands.Bot):
     def __init__(
         self,
-        chat_ai: ChatAI,
-        reaction_ai: ChatAI,
+        chat_ai: ChatAIHandler,
+        reaction_ai: ChatAIHandler,
         intents: Intents,
         guild_id: str | None = None,
         debug: bool = False,
