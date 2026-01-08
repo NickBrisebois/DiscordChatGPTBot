@@ -10,7 +10,7 @@ from openai.types.chat import (
     ChatCompletionUserMessageParam,
 )
 
-from conf.config_types import AIParametersConfig
+from config import AIParametersConfig
 
 MAX_TOKENS = 500
 
@@ -152,14 +152,6 @@ class ChatAIHandler:
                 username=self._bot_name,
                 text=text,
             ),
-            # ChannelMemoryItem(
-            #     role=Role.system,
-            #     username=self._bot_name,
-            #     text=(
-            #         "If you notice that you are repeating the same response or wording, you MUST change your "
-            #         "answer, add new information, or acknowledge the repetition explicitly."
-            #     ),
-            # ),
         ]
 
         for channel_id in self._conversation_history:

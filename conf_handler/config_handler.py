@@ -1,10 +1,9 @@
 import os
 import tomllib
-from dataclasses import Field, fields
 from pathlib import Path
-from typing import Annotated, Any, Type, get_args, get_type_hints
+from typing import Annotated, Any, Generic, Type, get_args, get_type_hints
 
-from conf.config_types import BaseConfig, Config, ConfigField, ConfigType
+from conf_handler.config_types import BaseConfig, ConfigField, ConfigType
 
 
 class ConfigPropertyRequiredException(Exception):
@@ -19,17 +18,19 @@ class InvalidConfigException(Exception):
         super().__init__(f"Missing required fields: {', '.join(missing_fields)}")
 
 
-class ConfigHandler:
+class ConfigHandler(Generic[ConfigType]):
     # Load configuration from file and/or environment variables
     # Setup as a sort of lightweight/homemade version of Pydantic's config
 
     _config_path: Path
-    _config: Config
+    _config_class: Type[ConfigType]
+    _config: ConfigType | None
 
-    def __init__(self, config_file_path: Path):
+    def __init__(self, config_file_path: Path, config_class: Type[ConfigType]):
         self._config_path = config_file_path
+        self._config_class = config_class
 
-    def load_config(self) -> Config:
+    def load_config(self) -> ConfigType:
         raw_toml_config: dict[str, Any] = {}
 
         if self._config_path.exists():
@@ -44,77 +45,83 @@ class ConfigHandler:
             print(f"{self._config_path} file not found, loading from environment only")
             raw_toml_config = {}
 
-        self._config = self._parse_config(Config, raw_toml_config)
+        self._config = self._parse_config(self._config_class, raw_toml_config)
         return self._config
 
     def _parse_config(
-        self, config_class: Type[ConfigType], data: dict[str, Any]
+        self, container_class_type: Type[ConfigType], data: dict[str, Any]
     ) -> ConfigType:
-        if not issubclass(config_class, BaseConfig):
+        if not issubclass(container_class_type, BaseConfig):
             raise TypeError(
-                f"Config class {config_class} must be a subclass of BaseConfig"
+                f"Config class {container_class_type} must be a subclass of BaseConfig"
             )
 
         kwargs: dict[str, Any] = {}
-        hints = get_type_hints(config_class, include_extras=True)
+        hints = get_type_hints(container_class_type, include_extras=True)
         missing_fields: list[str] = []
 
         for field_name, field_hint in hints.items():
-            config_field = self._extract_config_field(field_hint=field_hint)
+            sub_config_type, config_field = self._get_field_meta(field_hint=field_hint)
             try:
                 if config_field:
-                    kwargs[field_name] = self._get_field_value(
+                    kwargs[field_name] = self._parse_field_value(
+                        field_type=sub_config_type,
                         field_name=field_name,
                         config_field=config_field,
                         toml_value=data.get(field_name),
                     )
-                    continue
-
-                if issubclass(field_hint, BaseConfig):
+                elif sub_config_type and issubclass(sub_config_type, BaseConfig):
                     kwargs[field_name] = self._parse_config(
-                        field_hint, data.get(field_name, {})
+                        sub_config_type, data.get(field_name, {})
                     )
-                    continue
+                else:
+                    kwargs[field_name] = data.get(field_name)
+            except InvalidConfigException as e:
+                missing_fields.extend(e.missing_fields)
             except ConfigPropertyRequiredException as e:
                 missing_fields.append(e.field_name)
-                continue
-            finally:
+            except TypeError:
+                # sub_config_type isn't a class so we just use the raw data
                 kwargs[field_name] = data.get(field_name)
 
         if missing_fields:
             raise InvalidConfigException(missing_fields)
 
-        return config_class(**kwargs)
+        return container_class_type(**kwargs)
 
-    def _extract_config_field(
+    def _get_field_meta(
         self, field_hint: Annotated[Any, ConfigField]
-    ) -> ConfigField | None:
-        # Grab the value stored in the Annotated type hint
+    ) -> tuple[type, ConfigField] | tuple[type, None]:
         args = get_args(field_hint)
-        if len(args) < 2:
-            return None
+        if len(args) == 0:
+            return field_hint, None
+        elif len(args) == 1:
+            return args[0], None
+        elif len(args) >= 2 and isinstance(args[1], ConfigField):
+            return args[0], args[1]
 
-        for arg in args[1:]:
-            if isinstance(arg, ConfigField):
-                return arg
+        return args[0], None
 
-        return None
-
-    def _get_field_value(
-        self, field_name: str, config_field: ConfigField, toml_value: Any
+    def _parse_field_value(
+        self,
+        field_type: type | None,
+        field_name: str,
+        config_field: ConfigField,
+        toml_value: Any,
     ) -> Any:
-        env_value = os.getenv(config_field.env_name)
-        if env_value is not None:
-            return env_value
+        config_val = toml_value
 
-        config_val = env_value if env_value is not None else toml_value
+        if config_field.env_name in os.environ:
+            # env vars always take precedence over config file values
+            config_val = os.getenv(config_field.env_name)
+
         if config_val is None:
-            if hasattr(config_field, "default") and config_field.default is not None:
+            if config_field.default:
                 return config_field.default
             elif config_field.required:
                 raise ConfigPropertyRequiredException(field_name)
 
-        return config_val
+        return self._convert_value(config_val, field_type) if field_type else config_val
 
     def _convert_value(self, value: Any, target_type: type) -> Any:
         if isinstance(value, target_type):
@@ -134,7 +141,7 @@ class ConfigHandler:
         return value
 
     @property
-    def config(self) -> Config:
+    def config(self) -> ConfigType:
         if not self._config:
             self._config = self.load_config()
 
