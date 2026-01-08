@@ -4,7 +4,6 @@ from typing import Any, TypeVar
 
 class ConfigField:
     env_name: str
-    flag_name: str
     required: bool
     default: Any
 

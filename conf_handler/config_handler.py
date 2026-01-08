@@ -19,8 +19,10 @@ class InvalidConfigException(Exception):
 
 
 class ConfigHandler(Generic[ConfigType]):
-    # Load configuration from file and/or environment variables
-    # Setup as a sort of lightweight/homemade version of Pydantic's config
+    """
+    Generic configuration handler that loads from TOML with environment variable overrides
+    Heavily influenced by Pydantic
+    """
 
     _config_path: Path
     _config_class: Type[ConfigType]
@@ -29,6 +31,7 @@ class ConfigHandler(Generic[ConfigType]):
     def __init__(self, config_file_path: Path, config_class: Type[ConfigType]):
         self._config_path = config_file_path
         self._config_class = config_class
+        self._config = None
 
     def load_config(self) -> ConfigType:
         raw_toml_config: dict[str, Any] = {}
@@ -83,6 +86,9 @@ class ConfigHandler(Generic[ConfigType]):
             except TypeError:
                 # sub_config_type isn't a class so we just use the raw data
                 kwargs[field_name] = data.get(field_name)
+            except Exception as e:
+                print(f"Error parsing field {field_name}, using raw value: {e}")
+                kwargs[field_name] = data.get(field_name)
 
         if missing_fields:
             raise InvalidConfigException(missing_fields)
@@ -90,7 +96,7 @@ class ConfigHandler(Generic[ConfigType]):
         return container_class_type(**kwargs)
 
     def _get_field_meta(
-        self, field_hint: Annotated[Any, ConfigField]
+        self, field_hint: Any
     ) -> tuple[type, ConfigField] | tuple[type, None]:
         args = get_args(field_hint)
         if len(args) == 0:
@@ -116,7 +122,7 @@ class ConfigHandler(Generic[ConfigType]):
             config_val = os.getenv(config_field.env_name)
 
         if config_val is None:
-            if config_field.default:
+            if config_field.default is not None:
                 return config_field.default
             elif config_field.required:
                 raise ConfigPropertyRequiredException(field_name)

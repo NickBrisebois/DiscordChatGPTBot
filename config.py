@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Annotated
 
 from conf_handler.config_types import BaseConfig, ConfigField
