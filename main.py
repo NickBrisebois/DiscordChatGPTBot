@@ -4,10 +4,10 @@ from pathlib import Path
 
 import discord
 from discord import Intents, app_commands
+from pymicroconf import ConfigHandler, InvalidConfigException
 
 from bot.bot import ChatBot
 from chat_ai.chatai_handler import ChatAIHandler
-from conf_handler.config_handler import ConfigHandler, InvalidConfigException
 from config import Config
 
 
