@@ -8,5 +8,6 @@ requires-python = ">=3.12"
 package-mode = false
 dependencies = [
     "openai>=2.14.0",
-    "discord.py>=2.6.4"
+    "discord.py>=2.6.4",
+    "pymicroconf>=0.1.0"
 ]

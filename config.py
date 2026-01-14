@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from conf_handler.config_types import BaseConfig, ConfigField
+from pymicroconf import BaseConfig, ConfigField
 
 
 class AIParametersConfig(BaseConfig):
