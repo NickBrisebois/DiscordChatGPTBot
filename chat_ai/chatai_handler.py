@@ -12,8 +12,6 @@ from openai.types.chat import (
 
 from config import AIParametersConfig
 
-MAX_TOKENS = 500
-
 
 class ChatAIException(Exception):
     pass
@@ -42,7 +40,9 @@ class ChannelMemoryItem:
         }[self.role](
             content=[ChatCompletionContentPartTextParam(type="text", text=self.text)],
             role=self.role.value,
-            name=self._clean_username_for_openai(self.username),
+            name=self._clean_username_for_openai(self.username)
+            if self.role != Role.system
+            else None,
         )
 
 
@@ -55,11 +55,13 @@ class ChannelMemory:
 
     def __init__(
         self,
+        bot_name: str,
         channel_id: str,
         system_prompts: list[ChannelMemoryItem],
         messages: list[ChannelMemoryItem] | None = None,
         max_length: int = 50,
     ):
+        self.bot_name = bot_name
         self.channel_id = channel_id
         self.max_length = max_length
         self.system_prompts = system_prompts
@@ -68,14 +70,35 @@ class ChannelMemory:
     def append_message(self, message: ChannelMemoryItem) -> None:
         self._messages.append(message)
         if len(self._messages) > self.max_length:
-            self._messages.pop(0)
+            self._messages = self._messages[-self.max_length :]
 
     @property
     def messages(self) -> list[ChannelMemoryItem]:
-        return self._messages + self.system_prompts
+        return self.system_prompts + self._messages
 
-    def export_as_openai_type(self) -> list[ChatCompletionMessageParam]:
-        return [item.to_openai_type() for item in self.messages]
+    def export_as_openai_type(
+        self, condense: bool = False
+    ) -> list[ChatCompletionMessageParam]:
+        """
+        Export the channel memory as a list of OpenAI chat completion message parameters.
+
+        Args:
+            condense (bool): Whether to condense the messages into a single message.
+
+        Returns:
+            list[ChatCompletionMessageParam]: The channel memory as a list of OpenAI chat completion message parameters.
+        """
+        if not condense:
+            return [item.to_openai_type() for item in self.messages]
+
+        user_message = ""
+        for message in self._messages:
+            user_message += f"\n{message.username}: {message.text}"
+        user_message += f"\n{self.bot_name}:"
+
+        return [sp.to_openai_type() for sp in self.system_prompts] + [
+            {"role": "user", "content": user_message}
+        ]
 
     def clear(self) -> None:
         self._messages = []
@@ -96,12 +119,11 @@ class ChatAIHandler:
         debug: bool = False,
     ):
         if not initial_prompt:
-            initial_prompt = (
-                f"Your name is {bot_name}. Reply directly to the most recent user message."
-                "Stay on topic unless the user explicitly asks for randomness."
-                "Use casual Discord tone and humor when appropriate."
-                "Do not ignore the user's question."
-            )
+            initial_prompt = f"""
+            Your name is {bot_name}. You are a chaotic Discord user in a private friend group.
+            You speak casually, joke, riff, misremember things, and behave like a real
+            person in a Discord channel. You are not an assistant. You are a participant.
+            """
 
         self._bot_name = bot_name
         self._chat_history_length = chat_history_length
@@ -125,6 +147,7 @@ class ChatAIHandler:
         self, channel_id: str, messages: list[ChannelMemoryItem] | None = None
     ) -> None:
         self._conversation_history[channel_id] = ChannelMemory(
+            bot_name=self._bot_name,
             channel_id=channel_id,
             system_prompts=self._get_system_prompts(channel_id),
             messages=messages or [],
@@ -149,7 +172,7 @@ class ChatAIHandler:
         self._primary_system_prompts = [
             ChannelMemoryItem(
                 role=Role.system,
-                username=self._bot_name,
+                username=None,
                 text=text,
             ),
         ]
@@ -178,10 +201,15 @@ class ChatAIHandler:
             )
             response = await self._client.chat.completions.create(
                 model=self._model_name,
-                messages=self._conversation_history[channel_id].export_as_openai_type(),
-                max_completion_tokens=MAX_TOKENS,
+                messages=self._conversation_history[channel_id].export_as_openai_type(
+                    condense=True
+                ),
+                max_completion_tokens=self._ai_parameters.max_tokens,
                 response_format={"type": "text"},
-                **asdict(self._ai_parameters),
+                temperature=self._ai_parameters.temperature,
+                top_p=self._ai_parameters.top_p,
+                presence_penalty=self._ai_parameters.presence_penalty,
+                frequency_penalty=self._ai_parameters.frequency_penalty,
             )
 
             response_text = (
