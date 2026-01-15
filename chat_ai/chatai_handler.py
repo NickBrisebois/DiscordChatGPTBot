@@ -1,4 +1,5 @@
 import enum
+import re
 from dataclasses import asdict, dataclass
 
 from openai import AsyncOpenAI
@@ -91,13 +92,15 @@ class ChannelMemory:
         if not condense:
             return [item.to_openai_type() for item in self.messages]
 
-        user_message = ""
+        user_messages: list[str] = []
         for message in self._messages:
-            user_message += f"\n{message.username}: {message.text}"
-        user_message += f"\n{self.bot_name}:"
+            if message.username:
+                user_messages.append(f"{message.username}: {message.text}")
+            user_messages.append(message.text)
 
+        compiled_message = "\n".join(user_messages) + f"\n{self.bot_name}"
         return [sp.to_openai_type() for sp in self.system_prompts] + [
-            {"role": "user", "content": user_message}
+            {"role": "user", "content": compiled_message}
         ]
 
     def clear(self) -> None:
@@ -192,13 +195,27 @@ class ChatAIHandler:
         for channel in channels:
             self.initialise_channel_history(channel)
 
+    def _clean_response(self, text: str) -> str:
+        # Remove bot name and colon from response text (not always present but sometimes)
+        pattern = rf"^{re.escape(self._bot_name)}\s*:\s*"
+        return re.sub(pattern, "", text, flags=re.IGNORECASE).strip()
+
     async def get_response(
-        self, channel_id: str, message_text: str, reply_to_username: str | None = None
+        self,
+        channel_id: str,
+        message_text: str,
+        reply_to_username: str | None = None,
+        skip_history: bool = False,
+        retry_attempt: int | None = None,
     ) -> str:
+        if not retry_attempt:
+            retry_attempt = 0
+
         try:
-            self._append_channel_history(
-                channel_id, Role.user, message_text, reply_to_username
-            )
+            if not skip_history:
+                self._append_channel_history(
+                    channel_id, Role.user, message_text, reply_to_username
+                )
             response = await self._client.chat.completions.create(
                 model=self._model_name,
                 messages=self._conversation_history[channel_id].export_as_openai_type(
@@ -212,10 +229,21 @@ class ChatAIHandler:
                 frequency_penalty=self._ai_parameters.frequency_penalty,
             )
 
-            response_text = (
-                response.choices[0].message.content
-                or f"I, sir {self._bot_name}, could not generate a response"
-            )
+            response_text = self._clean_response(response.choices[0].message.content)
+            if not response_text and retry_attempt < 3:
+                # Retry generating a response 3 times
+                return await self.get_response(
+                    channel_id=channel_id,
+                    message_text=message_text,
+                    reply_to_username=reply_to_username,
+                    skip_history=True,
+                    retry_attempt=retry_attempt + 1,
+                )
+            elif retry_attempt == 3:
+                # If all retries fail, return a default message
+                response_text = (
+                    "I have no thoughts on the matter (failed to generate a response)"
+                )
 
             self._append_channel_history(channel_id, Role.assistant, response_text)
             if self._debug:
