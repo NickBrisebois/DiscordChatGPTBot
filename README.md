@@ -33,6 +33,6 @@ MAX_HISTORY_SIZE=50
 All of the above env vars can also be configured with `config.toml`
 
 Features:
-  - Channel specific memory (hardcoded to 50 messages but easily changeable)
+  - Channel specific memory (defaults to 50 messages but can be changed by setting the `MAX_HISTORY_SIZE` env var to the number you want)
   - Can be DM'd for private conversation where you don't need to @ the bot
   - Randomly replies to a message every once and a while (2% chance, modify in bot.py)
