@@ -18,7 +18,6 @@ DISCORD_SERVER_ID: 8588513XXXXXXXXXXX # right click on the server and hit copy s
 OPENAI_MODEL: ft-gpt-4o-mini-2024-07-18:personal:xxxxxxxxxxxxx # fine tune here https://platform.openai.com/finetune
 
 BOT_NAME: lez # what's the name of this bot?
-READ_ALL_MESSAGES: true/false # should the bot insert every message into the chat history, even if it doesn't reference the bot?
 ```
 
 Features:
